@@ -49,7 +49,7 @@ You can set the MODEL constant at the top of `/src/llm/webLlmUtil.ts` to be what
   * common/ - Kitchen-sink folder for small utility modules and other source that doesn't merit grouping under a more general concept.
   * init/ - location for any source files called as part of initialiation.
   * developer/ - code that is really only meant to run at dev time - testing tools, profiling, backdoors.
-  * llm/ - client access and other utilities around LLM. llmUtil.ts has top-level functions for calling an inference interface provided either by Ollama or WebLLM.
+  * llm/ - client access and other utilities around LLM. llmUtil.ts has top-level functions for calling an inference interface provided by WebLLM.
   * persistence/ - utilities around persisting data in IndexedDb in a key/document style with capability of importing/exporting documents as files.
   * loadScreen/ - screen that loads the chosen LLM model locally and shows progress.
   * homeScreen/ - screen that is arrived at after loading completes. In the template, this screen has a basic LLM chat interface that can be replaced.
