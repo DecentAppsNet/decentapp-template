@@ -14,8 +14,9 @@ dist-ssr
 workAssets
 coverage
 public/.vite
-.github/workflows/*.yml
-ERIK.md
+
+# Be careful about deleting this line below. Very easy to accidentally expose some secrets used in environment variables by committing the .env file.
+.env
 
 # Editor directories and files
 .vscode/*
