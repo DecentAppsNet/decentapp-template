@@ -9,7 +9,7 @@
     "build": "tsc && vite build && npm run copyViteManifestForDev",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "setup-portal-workflows": "cp -r ./node_modules/decent-portal/github-workflows/*.yml .github/workflows",
+    "setup-portal-workflows": "mkdir -p .github/workflows && cp -r ./node_modules/decent-portal/github-workflows/*.yml .github/workflows",
     "test": "vitest --run",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage"
