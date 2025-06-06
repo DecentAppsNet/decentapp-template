@@ -1,7 +1,7 @@
 {
   "name": "decentapp-template",
   "private": true,
-  "version": "2.1.1",
+  "version": "2.1.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,7 @@
     "build": "tsc && vite build && npm run copyViteManifestForDev",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "setup-portal-workflows": "cp -r ./node_modules/decent-portal/github-workflows/*.yml .github/workflows",
+    "setup-portal-workflows": "mkdir -p .github/workflows && cp -r ./node_modules/decent-portal/github-workflows/*.yml .github/workflows",
     "test": "vitest --run",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage"
@@ -18,7 +18,7 @@
     "@mlc-ai/web-llm": "^0.2.79",
     "@mlc-ai/web-runtime": "^0.18.0-dev2",
     "@mlc-ai/web-tokenizers": "^0.1.6",
-    "decent-portal": "^1.1.3",
+    "decent-portal": "^1.1.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
