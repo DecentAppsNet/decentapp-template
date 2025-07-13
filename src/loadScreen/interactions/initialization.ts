@@ -1,4 +1,5 @@
 import { connect } from "@/llm/llmUtil.ts";
+import { ModelDeviceProblemsDialog, predictModelDeviceProblems } from "decent-portal";
 
 let isInitialized = false;
 let isInitializing = false;
@@ -17,7 +18,16 @@ function _findPercentCompleteFromStatus(status:string):number|null {
   return leftValue / rightValue;
 }
 
-export async function init(setPercentComplete:Function, setCurrenTask:Function):Promise<boolean> {
+// Returns true if model is ready to load, false if there are problems.
+export async function init(modelId:string, setProblems:Function, setModalDialogName:Function):Promise<boolean> {
+  const problems = await predictModelDeviceProblems(modelId);
+  if (!problems) return true;
+  setProblems(problems);
+  setModalDialogName(ModelDeviceProblemsDialog.name);
+  return false;
+}
+
+export async function startLoadingModel(setPercentComplete:Function, setCurrenTask:Function):Promise<boolean> {
   if (isInitialized || isInitializing) return false;
   
   try {

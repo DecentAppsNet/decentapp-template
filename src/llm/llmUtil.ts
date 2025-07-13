@@ -6,16 +6,17 @@
   * call generate() to get a response for a prompt.
   * other APIs are there for setting system message, chat history, etc.
   
-  In CDA v2.0 there is just one connection type: WebLLM. Ollama was removed in v2.0, but Custom LLMs will allow configuring access to it. 
-  Custom LLMs are not supported yet because I've got some security concerns for using them with Decent Portal to work through.
-  But they are implemented in Hone, if you want to see - https://github.com/erikh2000/hone/tree/main/src/llm
+  There is just one connection type for now: WebLLM, but this is abstracted for future CDA updates that may add other LLM providers.
 */
+
+import { updateModelDeviceLoadHistory, updateModelDevicePerformanceHistory } from "decent-portal";
+
 import LLMConnection from "./types/LLMConnection";
 import LLMConnectionState from "./types/LLMConnectionState";
 import LLMConnectionType from "./types/LLMConnectionType";
 import LLMMessages from "./types/LLMMessages";
 import StatusUpdateCallback from "./types/StatusUpdateCallback";
-import { webLlmConnect, webLlmGenerate } from "./webLlmUtil";
+import { webLlmConnect, webLlmGenerate, WEBLLM_MODEL } from "./webLlmUtil";
 import { getCachedPromptResponse, setCachedPromptResponse } from "./promptCache";
 
 let theConnection:LLMConnection = {
@@ -41,6 +42,12 @@ function _clearConnectionAndThrow(message:string) {
   throw new Error(message);
 }
 
+function _inputCharCount(prompt:string):number {
+  return prompt.length + 
+    (messages.systemMessage ? messages.systemMessage.length : 0) + 
+    messages.chatHistory.reduce((acc, curr) => acc + curr.content.length, 0);
+}
+
 /*
   Public APIs
 */
@@ -52,7 +59,12 @@ export function isLlmConnected():boolean {
 export async function connect(onStatusUpdate:StatusUpdateCallback) {
   if (isLlmConnected()) return;
   theConnection.state = LLMConnectionState.INITIALIZING;
-  if (!await webLlmConnect(theConnection, onStatusUpdate)) _clearConnectionAndThrow('Failed to connect to WebLLM.');
+  const startLoadTime = Date.now();
+  if (!await webLlmConnect(theConnection, onStatusUpdate)) {
+    updateModelDeviceLoadHistory(WEBLLM_MODEL, false);
+    _clearConnectionAndThrow('Failed to connect to WebLLM.');
+  }
+  updateModelDeviceLoadHistory(WEBLLM_MODEL, true, Date.now() - startLoadTime);
   theConnection.state = LLMConnectionState.READY;
 }
 
@@ -84,14 +96,22 @@ export async function generate(prompt:string, onStatusUpdate:StatusUpdateCallbac
     return cachedResponse;
   }
 
+  let firstResponseTime = 0;
+  function _captureFirstResponse(status:string, percentComplete:number) {
+    if (!firstResponseTime) firstResponseTime = Date.now();
+    onStatusUpdate(status, percentComplete);
+  }
+
   if (!isLlmConnected()) throw Error('LLM connection is not initialized.');
   if (theConnection.state !== LLMConnectionState.READY) throw Error('LLM is not in ready state.');
   theConnection.state = LLMConnectionState.GENERATING;
   let message = '';
+  let requestTime = Date.now();
   switch(theConnection.connectionType) {
-    case LLMConnectionType.WEBLLM: message = await webLlmGenerate(theConnection, messages, prompt, onStatusUpdate); break;
+    case LLMConnectionType.WEBLLM: message = await webLlmGenerate(theConnection, messages, prompt, _captureFirstResponse); break;
     default: throw Error('Unexpected');
   }
+  updateModelDevicePerformanceHistory(WEBLLM_MODEL, requestTime, firstResponseTime, Date.now(), _inputCharCount(prompt), message.length);
   setCachedPromptResponse(prompt, message);
   theConnection.state = LLMConnectionState.READY;
   return message;
