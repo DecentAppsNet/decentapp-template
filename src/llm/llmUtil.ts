@@ -16,14 +16,17 @@ import LLMConnectionState from "./types/LLMConnectionState";
 import LLMConnectionType from "./types/LLMConnectionType";
 import LLMMessages from "./types/LLMMessages";
 import StatusUpdateCallback from "./types/StatusUpdateCallback";
-import { webLlmConnect, webLlmGenerate, WEBLLM_MODEL } from "./webLlmUtil";
+import { webLlmConnect, webLlmGenerate } from "./webLlmUtil";
 import { getCachedPromptResponse, setCachedPromptResponse } from "./promptCache";
 
+const UNSPECIFIED_MODEL_ID = 'UNSPECIFIED';
+
 let theConnection:LLMConnection = {
-  state:LLMConnectionState.UNINITIALIZED,
-  webLLMEngine:null,
-  serverUrl:null,
-  connectionType:LLMConnectionType.NONE
+  modelId: UNSPECIFIED_MODEL_ID,
+  state: LLMConnectionState.UNINITIALIZED,
+  webLLMEngine: null,
+  serverUrl: null,
+  connectionType: LLMConnectionType.NONE
 }
 
 let messages:LLMMessages = {
@@ -56,15 +59,22 @@ export function isLlmConnected():boolean {
   return theConnection.state === LLMConnectionState.READY || theConnection.state === LLMConnectionState.GENERATING;
 }
 
-export async function connect(onStatusUpdate:StatusUpdateCallback) {
+// Useful for app code that needs to use model-specific prompts or has other model-specific behavior.
+export function getConnectionModelId():string {
+  if (theConnection.modelId = UNSPECIFIED_MODEL_ID) throw Error('Must connect before model ID can be known.');
+  return theConnection.modelId;
+}
+
+export async function connect(modelId:string, onStatusUpdate:StatusUpdateCallback) {
   if (isLlmConnected()) return;
   theConnection.state = LLMConnectionState.INITIALIZING;
+  theConnection.modelId = modelId;
   const startLoadTime = Date.now();
-  if (!await webLlmConnect(theConnection, onStatusUpdate)) {
-    updateModelDeviceLoadHistory(WEBLLM_MODEL, false);
+  if (!await webLlmConnect(theConnection.modelId, theConnection, onStatusUpdate)) {
+    updateModelDeviceLoadHistory(theConnection.modelId, false);
     _clearConnectionAndThrow('Failed to connect to WebLLM.');
   }
-  updateModelDeviceLoadHistory(WEBLLM_MODEL, true, Date.now() - startLoadTime);
+  updateModelDeviceLoadHistory(theConnection.modelId, true, Date.now() - startLoadTime);
   theConnection.state = LLMConnectionState.READY;
 }
 
@@ -111,7 +121,7 @@ export async function generate(prompt:string, onStatusUpdate:StatusUpdateCallbac
     case LLMConnectionType.WEBLLM: message = await webLlmGenerate(theConnection, messages, prompt, _captureFirstResponse); break;
     default: throw Error('Unexpected');
   }
-  updateModelDevicePerformanceHistory(WEBLLM_MODEL, requestTime, firstResponseTime, Date.now(), _inputCharCount(prompt), message.length);
+  updateModelDevicePerformanceHistory(theConnection.modelId, requestTime, firstResponseTime, Date.now(), _inputCharCount(prompt), message.length);
   setCachedPromptResponse(prompt, message);
   theConnection.state = LLMConnectionState.READY;
   return message;

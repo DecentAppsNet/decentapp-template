@@ -1,6 +1,7 @@
 import {keyToPath} from "./pathUtil.ts";
 import {MIMETYPE_OCTET_STREAM, MIMETYPE_PLAIN_TEXT} from "./mimeTypes.ts";
 import {createNonGlobalRegex, escapeRegexCharacters} from "@/common/regExUtil";
+import { getAppId } from "decent-portal";
 
 /*
   # What Is This Module?
@@ -59,7 +60,6 @@ import {createNonGlobalRegex, escapeRegexCharacters} from "@/common/regExUtil";
 
 const SCHEMA_VERSION = 1; // Only incremented if IndexedDb schema changes, which is decoupled from app data version.
 const APP_DATA_VERSION = 1; // Increment each time a production release is made where the format of values stored in KeyValueRecord changed.
-const DB_NAME = `Decent App-${SCHEMA_VERSION}`;
 const KEY_VALUE_STORE = 'KeyValue';
 const PATH_INDEX_NAME = 'pathIndex';
 
@@ -90,6 +90,11 @@ export type KeyValueRecord = {
 //
 // Helper functions
 //
+
+function _getDbName():string {
+  const appId = getAppId();
+  return `${appId}-${SCHEMA_VERSION}`;
+}
 
 function _getStoreNamesFromSchema(schema:any):string[] {
   return Object.keys(schema).filter(key => key !== '__version');
@@ -159,15 +164,16 @@ async function _delete(db:IDBDatabase, storeName:string, key:string):Promise<voi
 }
 
 export async function deleteDatabase():Promise<void> {
-  const request = indexedDB.deleteDatabase(DB_NAME);
+  const dbName = _getDbName();
+  const request = indexedDB.deleteDatabase(dbName);
   return new Promise((resolve, reject) => {
-    request.onerror = (event:any) => reject(`Failed to delete "${DB_NAME}}" database with error code ${event.target.errorCode}.`);
+    request.onerror = (event:any) => reject(`Failed to delete "${dbName}}" database with error code ${event.target.errorCode}.`);
     request.onsuccess = () => resolve();
   });
 }
 
 async function _getRecordByKey(key:string):Promise<KeyValueRecord> {
-  const db = await _open(DB_NAME, SCHEMA);
+  const db = await _open(_getDbName(), SCHEMA);
   const record = await _get(db, KEY_VALUE_STORE, key) as KeyValueRecord;
   if (record.appDataVersion === APP_DATA_VERSION) return record;
   if (record.appDataVersion > APP_DATA_VERSION) throw new Error(`Record at ${key} is v${record.appDataVersion} while app only knows versions up to v${APP_DATA_VERSION}.`); // TODO - need to surface this to UI to trigger a reload, and also handle the case where reloading doesn't fix it.
@@ -176,13 +182,13 @@ async function _getRecordByKey(key:string):Promise<KeyValueRecord> {
   return record;
 }
 
-
 async function _setFieldValue(key:string, fieldName:string, fieldValue:any, mimeType:string) {
-  const db = await _open(DB_NAME, SCHEMA);
+  const db = await _open(_getDbName(), SCHEMA);
   const record = await _getRecordByKey(key)
     ?? { key } as KeyValueRecord;
   (record as any)[fieldName] = fieldValue;
   record.path = keyToPath(key);
+  record.appDataVersion = APP_DATA_VERSION;
   record.mimeType = mimeType;
   record.lastModified = Date.now();
   await _put(db, KEY_VALUE_STORE, record);
@@ -299,12 +305,12 @@ export async function setBytes(key:string, bytes:Uint8Array|null, mimeType = MIM
 
 export async function doesDatabaseExist():Promise<boolean> {
   const dbInfos:IDBDatabaseInfo[] = await indexedDB.databases();
-  const found = dbInfos.find(dbInfo => dbInfo.name === DB_NAME);
+  const found = dbInfos.find(dbInfo => dbInfo.name === _getDbName());
   return found !== undefined;
 }
 
 export async function getAllKeys():Promise<string[]> {
-  const db = await _open(DB_NAME, SCHEMA);
+  const db = await _open(_getDbName(), SCHEMA);
   const transaction = db.transaction(KEY_VALUE_STORE);
   const objectStore = transaction.objectStore(KEY_VALUE_STORE);
   const request = objectStore.getAllKeys();
@@ -315,7 +321,7 @@ export async function getAllKeys():Promise<string[]> {
 }
 
 export async function getAllKeysAtPath(path:string):Promise<string[]> {
-  const db = await _open(DB_NAME, SCHEMA);
+  const db = await _open(_getDbName(), SCHEMA);
   const transaction = db.transaction(KEY_VALUE_STORE);
   const objectStore = transaction.objectStore(KEY_VALUE_STORE);
   const pathIndex = objectStore.index(PATH_INDEX_NAME);
@@ -327,7 +333,7 @@ export async function getAllKeysAtPath(path:string):Promise<string[]> {
 }
 
 export async function getAllKeysMatchingRegex(regex:RegExp):Promise<string[]> {
-  const db = await _open(DB_NAME, SCHEMA);
+  const db = await _open(_getDbName(), SCHEMA);
   const transaction = db.transaction(KEY_VALUE_STORE);
   const objectStore = transaction.objectStore(KEY_VALUE_STORE);
   const request = objectStore.getAllKeys();
@@ -343,7 +349,7 @@ export async function getAllKeysMatchingRegex(regex:RegExp):Promise<string[]> {
 }
 
 export async function getAllValuesAtPath(path:string):Promise<KeyValueRecord[]> {
-  const db = await _open(DB_NAME, SCHEMA);
+  const db = await _open(_getDbName(), SCHEMA);
   const transaction = db.transaction(KEY_VALUE_STORE);
   const objectStore = transaction.objectStore(KEY_VALUE_STORE);
   const pathIndex = objectStore.index(PATH_INDEX_NAME);
@@ -355,7 +361,7 @@ export async function getAllValuesAtPath(path:string):Promise<KeyValueRecord[]> 
 }
 
 export async function getValuesForKeys(keys:string[]):Promise<KeyValueRecord[]> {
-  const db = await _open(DB_NAME, SCHEMA);
+  const db = await _open(_getDbName(), SCHEMA);
   const transaction = db.transaction(KEY_VALUE_STORE);
   const objectStore = transaction.objectStore(KEY_VALUE_STORE);
   
@@ -372,12 +378,12 @@ export async function getValuesForKeys(keys:string[]):Promise<KeyValueRecord[]> 
 }
 
 export async function renamePath(currentPath:string, nextPath:string):Promise<void> {
-  const db = await _open(DB_NAME, SCHEMA);
+  const db = await _open(_getDbName(), SCHEMA);
   return _renamePath(db, currentPath, nextPath);
 }
 
 export async function renameKey(currentKey:string, nextKey:string):Promise<void> {
-  const db = await _open(DB_NAME, SCHEMA);
+  const db = await _open(_getDbName(), SCHEMA);
   await _replaceRecordUsingNewKey(db, currentKey, nextKey, true);
   const currentDescendantPath = `${currentKey}/`;
   const nextDescendantPath = `${nextKey}/`;
@@ -385,12 +391,12 @@ export async function renameKey(currentKey:string, nextKey:string):Promise<void>
 }
 
 export async function deleteByKey(key:string):Promise<void> {
-  const db = await _open(DB_NAME, SCHEMA);
+  const db = await _open(_getDbName(), SCHEMA);
   await _delete(db, KEY_VALUE_STORE, key);
 }
 
 export async function deleteAllKeys(keys:string[]):Promise<void> {
-  const db = await _open(DB_NAME, SCHEMA);
+  const db = await _open(_getDbName(), SCHEMA);
   const transaction = db.transaction(KEY_VALUE_STORE, 'readwrite');
   const objectStore = transaction.objectStore(KEY_VALUE_STORE);
   keys.forEach(key => objectStore.delete(key));
@@ -414,7 +420,7 @@ export async function deleteAllKeysAtPath(path:string):Promise<void> {
 }
 
 export async function doesKeyExist(key:string):Promise<boolean> {
-  const db = await _open(DB_NAME, SCHEMA);
+  const db = await _open(_getDbName(), SCHEMA);
   const transaction = db.transaction(KEY_VALUE_STORE, 'readonly');
   const cursorRequest = transaction.objectStore(KEY_VALUE_STORE).openCursor(key);
   return new Promise((resolve, reject) => {

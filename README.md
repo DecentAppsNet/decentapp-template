@@ -31,8 +31,7 @@ There is no monolithic dev-dependency package to install and upgrade. You are in
 
 The template isn't a framework. It's just a reasonable starting point for a certain kind of web app. You should be able to make changes to match your preferences fairly easily. Rather than presenting you with a bunch of configuration options that manipulate a black box, you can just delete or rewrite code more directly.
 
-Following this sensibility, things like the LLM wrapper, widgets, and persistence functionality are in-lined into the project rather than kept as dependencies in packages.
-This practice is sometimes called "vendoring". The basic rationale is that sometimes it's a better to spend time understanding and writing code rather than maintaining the sprawl of a thousand or more packages. These decisions have tradeoffs, but I prefer to set the balance towards low-dependency development.
+Following this sensibility, things like the LLM wrapper, widgets, and persistence functionality are in-lined into the project rather than kept as dependencies in packages. This practice is sometimes called "vendoring". The basic rationale is that sometimes it's a better to spend time understanding and writing code rather than maintaining the sprawl of a thousand or more packages. These decisions have tradeoffs, but I prefer to set the balance towards low-dependency development.
 
 ## PWA Support
 
@@ -40,7 +39,7 @@ You'll see a little bit of extra code for PWA support - the service worker regis
 
 ## Changing LLM Models
 
-You can set the MODEL constant at the top of `/src/llm/webLlmUtil.ts` to be what you want. There is a default set there that is a "medium" choice based on balancing between capabilities and what people can run. On the Decent Portal, there's value in having a default model so that users can hop between different apps without needing to change models as often.
+You can configure the supported models in `/public/app-manifest.json` to the models you would like your app to support. It's reasonable to only support one model, since your prompts and other behavior may be coupled to a single model. But adding more models can give your users options for varied device capabilities.
 
 ## Key Folders and Files
 

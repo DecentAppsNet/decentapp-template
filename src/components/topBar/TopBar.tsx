@@ -10,8 +10,9 @@ const appLinks = [
 // Don't be shy about claiming credit for your work. The DecentBar wants to see you shine!
 const contributorText = undefined;
 
+// The app display name is configured in app-metadata.json, but you can override it here with `appName` prop if you want.
 function TopBar() {
-  return <DecentBar appName="Decent App" appLinks={appLinks} contributorText={contributorText}/>
+  return <DecentBar appLinks={appLinks} contributorText={contributorText}/>
 }
 
 export default TopBar;
