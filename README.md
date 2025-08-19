@@ -1,10 +1,38 @@
 # Decent App
 
-This is a placheholder README.md for Decent App.
+This is a placeholder README.md for Decent App.
 
 What does Decent App do? I have no idea. It will be up to you, the developer of Decent App, to describe it.
 
-There's some dev-specific content below to get you started. I figure you might replace it with content for your users later.
+## Licensing
+
+Code and other files in this repository are licensed under the MIT open source license.
+
+The fonts are hosted from decentapps.net rather than included in this repo. Their licensing is separate, but will be something compatible with open source, e.g., OFS SFIL.
+
+## Support
+
+Tell your users where to go. 
+
+I mean... to file bugs! An easy thing is to send them to a Github issues page.
+
+## Contact
+
+Give your users some way to contact you or your organization. 
+
+## Community
+
+Point your users to some public forum. Then they will be able to join forces to more effectively complain about your work! If you'd like a channel for your app on the [Decent Apps Discord server](https://discord.gg/kkp3x4X2Vb), just ask - we can probably do it. The channel would be named "Decent App". And what do people in that channel talk about? Decent App, of course.
+
+
+
+
+
+
+
+# Developer Guide (Delete After You Don't Need It)
+
+The content preceding this section might be things you want to keep and revise for users of your app to see. But this section is for you, the developer. If you're feeling super-confident, you could just delete it all now. Do it, you smug puppy!
 
 ## Running Decent App during Development
 
@@ -65,21 +93,3 @@ You can depart from the conventions below if you don't like them. I include them
 * If functionality is tied to one screen, keep source for it under the corresponding screen folder.
 * If functionality is common to multiple screens and has more than one source file, create a new folder under `/src` for it.
 * Otherwise, common functionality can go in a source file under `/common`.
-
-## Licensing
-
-My code and other files in this repository are licensed under the MIT open source license.
-
-The fonts used by the template are hosted from decentapps.net rather than included in this repo. Their licensing is separate, but will be something compatible with open source, e.g., OFS SFIL. If you want to self-host the fonts rather load them from decentapps.net, the easiest thing might be to just find the same fonts from other sources and verify the licensing for your use. 
-
-If you want to check the licensing I used for a hosted font, you can replace the filename of the URL that loads a WOFF or WOFF2 file with "LICENSE". So for example, the font served from "https://decentapps.net/fonts/hobby-of-night/hobby-of-night-webfont.woff2" was licensed to me according to terms found at "https://decentapps.net/fonts/hobby-of-night/LICENSE".
-
-## Contributing
-
-The project isn't open to contributions at this point. But that could change. Contact me if you'd like to collaborate.
-
-## Contacting
-
-You can reach me via my [LinkedIn profile](https://www.linkedin.com/in/erikhermansen/). I'll accept connections if you will just mention "decent apps" or some other shared interest in your connection request.
-
--Erik Hermansen
